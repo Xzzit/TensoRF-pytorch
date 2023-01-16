@@ -141,7 +141,7 @@ if __name__ == '__main__':
     #             ('n_lamb_sigma', 'n_lamb_sh') : [("[16,4,4]", "[48,12,12]")],
     #             ('TV_weight_density', 'TV_weight_app'):[(1.0,1.0)],
     #             ('n_iters','N_voxel_final'): [(25000,640**3)],
-    #             ('dataset_name','downsample_train','ndc_ray','N_vis','render_path') : [("llff",4.0, 1,-1,1)],
+    #             ('dataset_name','downsample_rate','ndc_ray','N_vis','render_path') : [("llff",4.0, 1,-1,1)],
     #             ('upsamp_list','update_AlphaMask_list'): [("[2000,3000,4000,5500,7000]","[2500]")],
     #     }
 
@@ -153,7 +153,7 @@ if __name__ == '__main__':
     #             ('shadingMode', 'view_pe', 'fea_pe', 'featureC','fea2denseAct', 'nSamples','N_voxel_init') : [('MLP_Fea', 0, 0, 128, 'relu',512,128**3),('SH', 0, 0, 128, 'relu',512,128**3)],
     #             ('TV_weight_density', 'TV_weight_app'):[(1.0,1.0)],
     #             ('n_iters','N_voxel_final'): [(25000,640**3)],
-    #             ('dataset_name','downsample_train','ndc_ray','N_vis','render_test','render_path') : [("llff",4.0, 1,-1,1,1)],
+    #             ('dataset_name','downsample_rate','ndc_ray','N_vis','render_test','render_path') : [("llff",4.0, 1,-1,1,1)],
     #             ('upsamp_list','update_AlphaMask_list'): [("[2000,3000,4000,5500,7000]","[2500]")],
     #     }
 

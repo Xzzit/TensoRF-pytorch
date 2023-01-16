@@ -4,7 +4,7 @@ datadir = ./data/nerf_llff_data/flower
 expname =  tensorf_flower_VM
 basedir = ./log
 
-downsample_train = 4.0
+downsample_rate = 4.0
 ndc_ray = 1
 
 n_iters = 25000

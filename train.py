@@ -47,7 +47,7 @@ def export_mesh(args):
 def render_test(args):
     # init dataset
     dataset = dataset_dict[args.dataset_name]
-    test_dataset = dataset(args.datadir, split='test', downsample=args.downsample_train, is_stack=True)
+    test_dataset = dataset(args.datadir, split='test', downsample=args.downsample_rate, is_stack=True)
     white_bg = test_dataset.white_bg
     ndc_ray = args.ndc_ray
 
@@ -64,7 +64,7 @@ def render_test(args):
     logfolder = os.path.dirname(args.ckpt)
     if args.render_train:
         os.makedirs(f'{logfolder}/imgs_train_all', exist_ok=True)
-        train_dataset = dataset(args.datadir, split='train', downsample=args.downsample_train, is_stack=True)
+        train_dataset = dataset(args.datadir, split='train', downsample=args.downsample_rate, is_stack=True)
         PSNRs_test = evaluation(train_dataset, tensorf, args, renderer, f'{logfolder}/imgs_train_all/',
                                 N_vis=-1, N_samples=-1, white_bg=white_bg, ndc_ray=ndc_ray, device=device)
         print(f'======> {args.expname} train all psnr: {np.mean(PSNRs_test)} <========================')
@@ -84,8 +84,8 @@ def render_test(args):
 def reconstruction(args):
     # init dataset
     dataset = dataset_dict[args.dataset_name]
-    train_dataset = dataset(args.datadir, split='train', downsample=args.downsample_train, is_stack=False)
-    test_dataset = dataset(args.datadir, split='test', downsample=args.downsample_train, is_stack=True)
+    train_dataset = dataset(args.datadir, split='train', downsample=args.downsample_rate, is_stack=False)
+    test_dataset = dataset(args.datadir, split='test', downsample=args.downsample_rate, is_stack=True)
     white_bg = train_dataset.white_bg
     near_far = train_dataset.near_far
     ndc_ray = args.ndc_ray
@@ -261,7 +261,7 @@ def reconstruction(args):
 
     if args.render_train:
         os.makedirs(f'{logfolder}/imgs_train_all', exist_ok=True)
-        train_dataset = dataset(args.datadir, split='train', downsample=args.downsample_train, is_stack=True)
+        train_dataset = dataset(args.datadir, split='train', downsample=args.downsample_rate, is_stack=True)
         PSNRs_test = evaluation(train_dataset, tensorf, args, renderer, f'{logfolder}/imgs_train_all/',
                                 N_vis=-1, N_samples=-1, white_bg=white_bg, ndc_ray=ndc_ray, device=device)
         print(f'======> {args.expname} test all psnr: {np.mean(PSNRs_test)} <========================')
