@@ -82,15 +82,15 @@ class BlenderDataset(Dataset):
 
         self.poses = torch.stack(self.poses)
         if not self.is_stack:
-            self.all_rays = torch.cat(self.all_rays, 0)  # (len(self.meta['frames])*h*w, 3)
-            self.all_rgbs = torch.cat(self.all_rgbs, 0)  # (len(self.meta['frames])*h*w, 3)
+            self.all_rays = torch.cat(self.all_rays, 0)  # (len(self.meta['frames'])*h*w, 3)
+            self.all_rgbs = torch.cat(self.all_rgbs, 0)  # (len(self.meta['frames'])*h*w, 3)
 
-        #             self.all_depth = torch.cat(self.all_depth, 0)  # (len(self.meta['frames])*h*w, 3)
+        #             self.all_depth = torch.cat(self.all_depth, 0)  # (len(self.meta['frames'])*h*w, 3)
         else:
-            self.all_rays = torch.stack(self.all_rays, 0)  # (len(self.meta['frames]),h*w, 3)
+            self.all_rays = torch.stack(self.all_rays, 0)  # (len(self.meta['frames']),h*w, 3)
             self.all_rgbs = torch.stack(self.all_rgbs, 0).reshape(-1, *self.img_wh[::-1],
-                                                                  3)  # (len(self.meta['frames]),h,w,3)
-            # self.all_masks = torch.stack(self.all_masks, 0).reshape(-1,*self.img_wh[::-1])  # (len(self.meta['frames]),h,w,3)
+                                                                  3)  # (len(self.meta['frames']),h,w,3)
+            # self.all_masks = torch.stack(self.all_masks, 0).reshape(-1,*self.img_wh[::-1])  # (len(self.meta['frames']),h,w,3)
 
     def define_transforms(self):
         self.transform = T.ToTensor()

@@ -221,11 +221,11 @@ class LLFFDataset(Dataset):
             self.all_rays += [torch.cat([rays_o, rays_d], 1)]  # (h*w, 6)
 
         if not self.is_stack:
-            self.all_rays = torch.cat(self.all_rays, 0) # (len(self.meta['frames])*h*w, 3)
-            self.all_rgbs = torch.cat(self.all_rgbs, 0) # (len(self.meta['frames])*h*w,3)
+            self.all_rays = torch.cat(self.all_rays, 0) # (len(self.meta['frames'])*h*w, 3)
+            self.all_rgbs = torch.cat(self.all_rgbs, 0) # (len(self.meta['frames'])*h*w,3)
         else:
-            self.all_rays = torch.stack(self.all_rays, 0)   # (len(self.meta['frames]),h,w, 3)
-            self.all_rgbs = torch.stack(self.all_rgbs, 0).reshape(-1,*self.img_wh[::-1], 3)  # (len(self.meta['frames]),h,w,3)
+            self.all_rays = torch.stack(self.all_rays, 0)   # (len(self.meta['frames']),h,w, 3)
+            self.all_rgbs = torch.stack(self.all_rgbs, 0).reshape(-1,*self.img_wh[::-1], 3)  # (len(self.meta['frames']),h,w,3)
 
 
     def define_transforms(self):
