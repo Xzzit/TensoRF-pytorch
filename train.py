@@ -11,7 +11,14 @@ import datetime
 from dataLoader import dataset_dict
 import sys
 
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+# get device
+if torch.cuda.is_available():
+    device = torch.device('cuda')
+elif torch.backends.mps.isavailable():
+    device = torch.device('mps')
+else:
+    device = torch.device('cpu')
+
 
 renderer = OctreeRender_trilinear_fast
 
@@ -109,11 +116,11 @@ def reconstruction(args):
     summary_writer = SummaryWriter(logfolder)
 
     # init parameters
-    # tensorVM, renderer = init_parameters(args, train_dataset.scene_bbox.to(device), reso_list[0])
     aabb = train_dataset.scene_bbox.to(device)
-    reso_cur = N_to_reso(args.N_voxel_init, aabb)
+    reso_cur = N_to_reso(args.N_voxel_init, aabb)  # number of voxel along x,y,z.
     nSamples = min(args.nSamples, cal_n_samples(reso_cur, args.step_ratio))
 
+    # init tensorf model
     if args.ckpt is not None:
         ckpt = torch.load(args.ckpt, map_location=device)
         kwargs = ckpt['kwargs']
@@ -130,6 +137,7 @@ def reconstruction(args):
                                         featureC=args.featureC, step_ratio=args.step_ratio,
                                         fea2denseAct=args.fea2denseAct)
 
+    # save learnable parameters
     grad_vars = tensorf.get_optparam_groups(args.lr_init, args.lr_basis)
     if args.lr_decay_iters > 0:
         lr_factor = args.lr_decay_target_ratio ** (1 / args.lr_decay_iters)
