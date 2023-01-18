@@ -43,7 +43,7 @@ class BlenderDataset(Dataset):
 
         w, h = self.img_wh
         self.focal = 0.5 * 800 / np.tan(0.5 * self.meta['camera_angle_x'])  # original focal length
-        self.focal *= self.img_wh[0] / 800  # modify focal length to match size self.img_wh
+        self.focal = self.focal / self.downsample  # modify focal length to match size self.img_wh
 
         # ray directions for all pixels, same for all images (same H, W, focal)
         self.directions = get_ray_directions(h, w, [self.focal, self.focal])  # (h, w, 3)
