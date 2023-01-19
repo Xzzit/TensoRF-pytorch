@@ -137,7 +137,7 @@ def reconstruction(args):
                                         featureC=args.featureC, step_ratio=args.step_ratio,
                                         fea2denseAct=args.fea2denseAct)
 
-    # save learnable parameters
+    # init learnable parameters
     grad_vars = tensorf.get_optparam_groups(args.lr_init, args.lr_basis)
     if args.lr_decay_iters > 0:
         lr_factor = args.lr_decay_target_ratio ** (1 / args.lr_decay_iters)
@@ -150,14 +150,15 @@ def reconstruction(args):
     optimizer = torch.optim.Adam(grad_vars, betas=(0.9, 0.99))
 
     # linear in logrithmic space
-    N_voxel_list = (torch.round(torch.exp(
-        torch.linspace(np.log(args.N_voxel_init), np.log(args.N_voxel_final), len(upsamp_list) + 1))).long()).tolist()[
-                   1:]
+    N_voxel_list = torch.exp(torch.linspace(np.log(args.N_voxel_init), np.log(args.N_voxel_final), len(upsamp_list) + 1))
+    N_voxel_list = (torch.round(N_voxel_list).long()).tolist()[1:]
 
     torch.cuda.empty_cache()
     PSNRs, PSNRs_test = [], [0]
 
-    allrays, allrgbs = train_dataset.all_rays, train_dataset.all_rgbs
+    # init rays and RGB
+    allrays = train_dataset.all_rays  # (len(self.meta['frames'])*h*w, 6(r_o+r_d))
+    allrgbs = train_dataset.all_rgbs  # (len(self.meta['frames'])*h*w, 3(RGB))
     if not args.ndc_ray:
         allrays, allrgbs = tensorf.filtering_rays(allrays, allrgbs, bbox_only=True)
     trainingSampler = SimpleSampler(allrays.shape[0], args.batch_size)
