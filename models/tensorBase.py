@@ -279,19 +279,19 @@ class TensorBase(torch.nn.Module):
         stepsize = self.stepSize
         near, far = self.near_far
         vec = torch.where(rays_d==0, torch.full_like(rays_d, 1e-6), rays_d)
-        rate_a = (self.aabb[1] - rays_o) / vec
-        rate_b = (self.aabb[0] - rays_o) / vec
-        t_min = torch.minimum(rate_a, rate_b).amax(-1).clamp(min=near, max=far)
+        rate_a = (self.aabb[1] - rays_o) / vec  # [batch_size, 3]
+        rate_b = (self.aabb[0] - rays_o) / vec  # [batch_size, 3]
+        t_min = torch.minimum(rate_a, rate_b).amax(-1).clamp(min=near, max=far)  # [batch_size]
 
-        rng = torch.arange(N_samples)[None].float()
+        rng = torch.arange(N_samples)[None].float()  # [1, sampling_pts]
         if is_train:
-            rng = rng.repeat(rays_d.shape[-2],1)
-            rng += torch.rand_like(rng[:,[0]])
+            rng = rng.repeat(rays_d.shape[-2],1)  # [batch_size, sampling_pts]
+            rng += torch.rand_like(rng[:,[0]])  # [batch_size, sampling_pts]
         step = stepsize * rng.to(rays_o.device)
-        interpx = (t_min[...,None] + step)
+        interpx = (t_min[...,None] + step)  # [batch_size, sampling_pts]
 
-        rays_pts = rays_o[...,None,:] + rays_d[...,None,:] * interpx[...,None]
-        mask_outbbox = ((self.aabb[0]>rays_pts) | (rays_pts>self.aabb[1])).any(dim=-1)
+        rays_pts = rays_o[...,None,:] + rays_d[...,None,:] * interpx[...,None]  # [batch_size, sampling_pts, 3]
+        mask_outbbox = ((self.aabb[0]>rays_pts) | (rays_pts>self.aabb[1])).any(dim=-1)  # [batch_size, sampling_pts]
 
         return rays_pts, interpx, ~mask_outbbox
 
@@ -409,17 +409,19 @@ class TensorBase(torch.nn.Module):
     def forward(self, rays_chunk, white_bg=True, is_train=False, ndc_ray=False, N_samples=-1):
 
         # sample points
-        viewdirs = rays_chunk[:, 3:6]
+        rays_o = rays_chunk[:, :3]
+        rays_d = rays_chunk[:, 3:6]
         if ndc_ray:
-            xyz_sampled, z_vals, ray_valid = self.sample_ray_ndc(rays_chunk[:, :3], viewdirs, is_train=is_train,N_samples=N_samples)
+            xyz_sampled, z_vals, ray_valid = self.sample_ray_ndc(rays_o, rays_d, is_train=is_train,N_samples=N_samples)
             dists = torch.cat((z_vals[:, 1:] - z_vals[:, :-1], torch.zeros_like(z_vals[:, :1])), dim=-1)
-            rays_norm = torch.norm(viewdirs, dim=-1, keepdim=True)
+            rays_norm = torch.norm(rays_d, dim=-1, keepdim=True)
             dists = dists * rays_norm
-            viewdirs = viewdirs / rays_norm
+            rays_d = rays_d / rays_norm
         else:
-            xyz_sampled, z_vals, ray_valid = self.sample_ray(rays_chunk[:, :3], viewdirs, is_train=is_train,N_samples=N_samples)
+            # [batch_size, sampling_pts, 3], [batch_size, sampling_pts], [batch_size, sampling_pts]
+            xyz_sampled, z_vals, ray_valid = self.sample_ray(rays_o, rays_d, is_train=is_train,N_samples=N_samples)
             dists = torch.cat((z_vals[:, 1:] - z_vals[:, :-1], torch.zeros_like(z_vals[:, :1])), dim=-1)
-        viewdirs = viewdirs.view(-1, 1, 3).expand(xyz_sampled.shape)
+        rays_d = rays_d.view(-1, 1, 3).expand(xyz_sampled.shape)
         
         if self.alphaMask is not None:
             alphas = self.alphaMask.sample_alpha(xyz_sampled[ray_valid])
@@ -446,7 +448,7 @@ class TensorBase(torch.nn.Module):
 
         if app_mask.any():
             app_features = self.compute_appfeature(xyz_sampled[app_mask])
-            valid_rgbs = self.renderModule(xyz_sampled[app_mask], viewdirs[app_mask], app_features)
+            valid_rgbs = self.renderModule(xyz_sampled[app_mask], rays_d[app_mask], app_features)
             rgb[app_mask] = valid_rgbs
 
         acc_map = torch.sum(weight, -1)
