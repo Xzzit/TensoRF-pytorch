@@ -436,7 +436,8 @@ class TensorBase(torch.nn.Module):
 
         if ray_valid.any():
             xyz_sampled = self.normalize_coord(xyz_sampled)
-            sigma_feature = self.compute_densityfeature(xyz_sampled[ray_valid])
+            xyz_sampled_valid = xyz_sampled[ray_valid]  # [num_valid_pts, 3]
+            sigma_feature = self.compute_densityfeature(xyz_sampled_valid)  # [num_valid_pts]
 
             validsigma = self.feature2density(sigma_feature)
             sigma[ray_valid] = validsigma

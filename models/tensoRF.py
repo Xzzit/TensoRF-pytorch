@@ -69,12 +69,15 @@ class TensorVMSplit(TensorBase):
     def compute_densityfeature(self, xyz_sampled):
 
         # plane + line basis
-        coordinate_plane = torch.stack((xyz_sampled[..., self.matMode[0]], xyz_sampled[..., self.matMode[1]],
-                                        xyz_sampled[..., self.matMode[2]])).detach().view(3, -1, 1, 2)
-        coordinate_line = torch.stack(
-            (xyz_sampled[..., self.vecMode[0]], xyz_sampled[..., self.vecMode[1]], xyz_sampled[..., self.vecMode[2]]))
-        coordinate_line = torch.stack((torch.zeros_like(coordinate_line), coordinate_line), dim=-1).detach().view(3, -1,
-                                                                                                                  1, 2)
+        coordinate_plane = torch.stack((xyz_sampled[..., self.matMode[0]], 
+                                        xyz_sampled[..., self.matMode[1]],
+                                        xyz_sampled[..., self.matMode[2]])).detach().view(3, -1, 1, 2)  # [3, num_valid_pts, 1, 2]
+
+        coordinate_line = torch.stack((xyz_sampled[..., self.vecMode[0]], 
+                                       xyz_sampled[..., self.vecMode[1]],
+                                       xyz_sampled[..., self.vecMode[2]]))  # [3, num_valid_pts]
+        coordinate_line = torch.stack((torch.zeros_like(coordinate_line), 
+                                       coordinate_line), dim=-1).detach().view(3, -1, 1, 2)  # [3, num_valid_pts, 1, 2]
 
         sigma_feature = torch.zeros((xyz_sampled.shape[0],), device=xyz_sampled.device)
         for idx_plane in range(len(self.density_plane)):
@@ -82,7 +85,7 @@ class TensorVMSplit(TensorBase):
                                              align_corners=True).view(-1, *xyz_sampled.shape[:1])
             line_coef_point = F.grid_sample(self.density_line[idx_plane], coordinate_line[[idx_plane]],
                                             align_corners=True).view(-1, *xyz_sampled.shape[:1])
-            sigma_feature = sigma_feature + torch.sum(plane_coef_point * line_coef_point, dim=0)
+            sigma_feature += torch.sum(plane_coef_point * line_coef_point, dim=0)
 
         return sigma_feature
 
