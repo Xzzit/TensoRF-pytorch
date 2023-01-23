@@ -175,8 +175,8 @@ def reconstruction(args):
     pbar = tqdm(range(args.n_iters), miniters=args.progress_refresh_rate, file=sys.stdout)
     for iteration in pbar:
 
-        ray_idx = trainingSampler.nextids()
-        rays_train, rgb_train = allrays[ray_idx], allrgbs[ray_idx].to(device)
+        ray_idx = trainingSampler.nextids()  # [batch_size]
+        rays_train, rgb_train = allrays[ray_idx], allrgbs[ray_idx].to(device)  # (batch_size, 6(r_o+r_d)), (batch_size, 3(RGB))
 
         # rgb_map, alphas_map, depth_map, weights, uncertainty
         rgb_map, alphas_map, depth_map, weights, uncertainty = renderer(rays_train, tensorf, chunk=args.batch_size,
@@ -243,7 +243,6 @@ def reconstruction(args):
             new_aabb = tensorf.updateAlphaMask(tuple(reso_mask))
             if iteration == update_AlphaMask_list[0]:
                 tensorf.shrink(new_aabb)
-                # tensorVM.alphaMask = None
                 L1_reg_weight = args.L1_weight_rest
                 print("continuing L1_reg_weight", L1_reg_weight)
 
