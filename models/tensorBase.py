@@ -431,8 +431,8 @@ class TensorBase(torch.nn.Module):
             ray_valid = ~ray_invalid
 
 
-        sigma = torch.zeros(xyz_sampled.shape[:-1], device=xyz_sampled.device)
-        rgb = torch.zeros((*xyz_sampled.shape[:2], 3), device=xyz_sampled.device)
+        sigma = torch.zeros(xyz_sampled.shape[:-1], device=xyz_sampled.device)  # [batch_size, sampling_pts]
+        rgb = torch.zeros_like(xyz_sampled, device=xyz_sampled.device)  # [batch_size, sampling_pts, 3]
 
         if ray_valid.any():
             xyz_sampled = self.normalize_coord(xyz_sampled)
