@@ -168,7 +168,6 @@ class TensorBase(torch.nn.Module):
         self.comp_w = [1, 1, 1]
 
         self.init_svd_volume(gridSize[0], device)
-        print('!!!', self.density_plane, self.density_line)
 
         self.shadingMode, self.pos_pe, self.view_pe, self.fea_pe, self.featureC = shadingMode, pos_pe, view_pe, fea_pe, featureC
         self.init_render_func(shadingMode, pos_pe, view_pe, fea_pe, featureC, device)
