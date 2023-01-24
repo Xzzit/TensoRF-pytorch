@@ -138,7 +138,7 @@ class MLPRender(torch.nn.Module):
 
 
 class TensorBase(torch.nn.Module):
-    def __init__(self, aabb, gridSize, device, density_n_comp=8, appearance_n_comp=24, app_dim=27,
+    def __init__(self, aabb, gridSize, device, density_n_comp=[8,8,8], appearance_n_comp=[24,24,24], app_dim=27,
                  shadingMode='MLP_PE', alphaMask=None, near_far=[2.0, 6.0],
                  density_shift=-10, alphaMask_thres=0.001, distance_scale=25, rayMarch_weight_thres=0.0001,
                  pos_pe=6, view_pe=6, fea_pe=6, featureC=128, step_ratio=2.0,
@@ -168,6 +168,7 @@ class TensorBase(torch.nn.Module):
         self.comp_w = [1, 1, 1]
 
         self.init_svd_volume(gridSize[0], device)
+        print('!!!', self.density_plane, self.density_line)
 
         self.shadingMode, self.pos_pe, self.view_pe, self.fea_pe, self.featureC = shadingMode, pos_pe, view_pe, fea_pe, featureC
         self.init_render_func(shadingMode, pos_pe, view_pe, fea_pe, featureC, device)

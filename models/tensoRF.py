@@ -6,19 +6,34 @@ class TensorVMSplit(TensorBase):
         super(TensorVMSplit, self).__init__(aabb, gridSize, device, **kargs)
 
     def init_svd_volume(self, res, device):
+
+        # density components (less)
         self.density_plane, self.density_line = self.init_one_svd(self.density_n_comp, self.gridSize, 0.1, device)
+
+        # appearance components (more)
         self.app_plane, self.app_line = self.init_one_svd(self.app_n_comp, self.gridSize, 0.1, device)
         self.basis_mat = torch.nn.Linear(sum(self.app_n_comp), self.app_dim, bias=False).to(device)
 
     def init_one_svd(self, n_component, gridSize, scale, device):
+
+        # init plane and line
         plane_coef, line_coef = [], []
+
+        # append parameters
         for i in range(len(self.vecMode)):
+            
+            # line vector
             vec_id = self.vecMode[i]
-            mat_id_0, mat_id_1 = self.matMode[i]
-            plane_coef.append(torch.nn.Parameter(
-                scale * torch.randn((1, n_component[i], gridSize[mat_id_1], gridSize[mat_id_0]))))  #
             line_coef.append(
-                torch.nn.Parameter(scale * torch.randn((1, n_component[i], gridSize[vec_id], 1))))
+                torch.nn.Parameter(
+                    scale * torch.randn((1, n_component[i], gridSize[vec_id], 1))))  # [1, num_comp, num_grid, 1]
+
+            # plane matrix
+            mat_id_0, mat_id_1 = self.matMode[i]
+            plane_coef.append(
+                torch.nn.Parameter(
+                    scale * torch.randn((1, n_component[i], gridSize[mat_id_1], gridSize[mat_id_0]))))  # [1, num_comp, num_grid, num_grid']
+            
 
         return torch.nn.ParameterList(plane_coef).to(device), torch.nn.ParameterList(line_coef).to(device)
 
@@ -70,9 +85,9 @@ class TensorVMSplit(TensorBase):
 
         # plane + line basis
         coordinate_plane = torch.stack(
-            (xyz_sampled[..., self.matMode[0]],
-             xyz_sampled[..., self.matMode[1]],
-             xyz_sampled[..., self.matMode[2]])
+            (xyz_sampled[..., self.matMode[0]],  # (0, 1)
+             xyz_sampled[..., self.matMode[1]],  # (0, 2)
+             xyz_sampled[..., self.matMode[2]])  # (1, 2)
         ).detach().view(3, -1, 1, 2)  # [3, num_valid_pts, 1, 2]
 
         coordinate_line = torch.stack((xyz_sampled[..., self.vecMode[0]],
@@ -81,7 +96,8 @@ class TensorVMSplit(TensorBase):
         coordinate_line = torch.stack((torch.zeros_like(coordinate_line), 
                                        coordinate_line), dim=-1).detach().view(3, -1, 1, 2)  # [3, num_valid_pts, 1, 2]
 
-        sigma_feature = torch.zeros((xyz_sampled.shape[0],), device=xyz_sampled.device)
+        sigma_feature = torch.zeros((xyz_sampled.shape[0]), device=xyz_sampled.device)  # [num_valid_pts]
+
         for idx_plane in range(len(self.density_plane)):
             plane_coef_point = F.grid_sample(self.density_plane[idx_plane], coordinate_plane[[idx_plane]],
                                              align_corners=True).view(-1, *xyz_sampled.shape[:1])
