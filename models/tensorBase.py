@@ -215,9 +215,9 @@ class TensorBase(torch.nn.Module):
     def compute_appfeature(self, xyz_sampled):
         pass
 
+    # normalize xyz to [-1, 1]
     def normalize_coord(self, xyz_sampled):
         return (xyz_sampled - self.aabb[0]) * self.invaabbSize - 1
-        # return (xyz_sampled - self.aabb[0]) / self.aabbSize
 
     def get_optparam_groups(self, lr_init_spatial=0.02, lr_init_network=0.001):
         pass
@@ -430,7 +430,7 @@ class TensorBase(torch.nn.Module):
         rgb = torch.zeros_like(xyz_sampled, device=xyz_sampled.device)  # [batch_size, sampling_pts, 3]
 
         if ray_valid.any():
-            xyz_sampled = self.normalize_coord(xyz_sampled)
+            xyz_sampled = self.normalize_coord(xyz_sampled)  # [batch_size, sampling_pts, 3]
             xyz_sampled_valid = xyz_sampled[ray_valid]  # [num_valid_pts, 3]
             sigma_feature = self.compute_densityfeature(xyz_sampled_valid)  # [num_valid_pts]
 
