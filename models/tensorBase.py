@@ -439,15 +439,15 @@ class TensorBase(torch.nn.Module):
 
         alpha, weight, bg_weight = raw2alpha(sigma, dists * self.distance_scale)
 
-        app_mask = weight > self.rayMarch_weight_thres
+        app_mask = weight > self.rayMarch_weight_thres  # [batch_size, sampling_pts]
 
         if app_mask.any():
-            app_features = self.compute_appfeature(xyz_sampled[app_mask])  # [num_valid_pts, 3] -> [, app_dim]
-            valid_rgbs = self.renderModule(xyz_sampled[app_mask], rays_d[app_mask], app_features)
-            rgb[app_mask] = valid_rgbs
+            app_features = self.compute_appfeature(xyz_sampled[app_mask])  # [num_valid_pts', 3] -> [num_valid_pts', app_dim]
+            valid_rgbs = self.renderModule(xyz_sampled[app_mask], rays_d[app_mask], app_features)  # [num_valid_pts', 3]
+            rgb[app_mask] = valid_rgbs  # [batch_size, sampling_pts, 3]
 
-        acc_map = torch.sum(weight, -1)
-        rgb_map = torch.sum(weight[..., None] * rgb, -2)
+        acc_map = torch.sum(weight, -1)  # [batch_size]
+        rgb_map = torch.sum(weight[..., None] * rgb, -2)  # [batch_size, 3]
 
         if white_bg or (is_train and torch.rand((1,)) < 0.5):
             rgb_map = rgb_map + (1. - acc_map[..., None])

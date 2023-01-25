@@ -112,16 +112,16 @@ class TensorVMSplit(TensorBase):
         # plane + line basis
         coordinate_plane = torch.stack(
             (xyz_sampled[..., self.matMode[0]], 
-            xyz_sampled[..., self.matMode[1]],
-            xyz_sampled[..., self.matMode[2]])
-            ).detach().view(3, -1, 1, 2)
+             xyz_sampled[..., self.matMode[1]],
+             xyz_sampled[..., self.matMode[2]])
+        ).detach().view(3, -1, 1, 2)  # [3, num_valid_pts', 1, 2]
 
         coordinate_line = torch.stack(
             (xyz_sampled[..., self.vecMode[0]], 
-            xyz_sampled[..., self.vecMode[1]], 
-            xyz_sampled[..., self.vecMode[2]]))
+             xyz_sampled[..., self.vecMode[1]], 
+             xyz_sampled[..., self.vecMode[2]]))
         coordinate_line = torch.stack(
-            (torch.ones_like(coordinate_line), coordinate_line), dim=-1).detach().view(3, -1, 1, 2)
+            (torch.ones_like(coordinate_line), coordinate_line), dim=-1).detach().view(3, -1, 1, 2)  # [3, num_valid_pts', 1, 2]
 
         plane_coef_point, line_coef_point = [], []
         for idx_plane in range(len(self.app_plane)):
@@ -129,7 +129,7 @@ class TensorVMSplit(TensorBase):
                                                   align_corners=True).view(-1, *xyz_sampled.shape[:1]))
             line_coef_point.append(F.grid_sample(self.app_line[idx_plane], coordinate_line[[idx_plane]],
                                                  align_corners=True).view(-1, *xyz_sampled.shape[:1]))
-        plane_coef_point, line_coef_point = torch.cat(plane_coef_point), torch.cat(line_coef_point)
+        plane_coef_point, line_coef_point = torch.cat(plane_coef_point), torch.cat(line_coef_point)  # [3 x num_comp_color, num_valid_pts']
 
         return self.basis_mat((plane_coef_point * line_coef_point).T)
 
