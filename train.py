@@ -103,19 +103,19 @@ def reconstruction(args):
     n_lamb_sigma = args.n_lamb_sigma
     n_lamb_sh = args.n_lamb_sh
 
+    # make dir
     if args.add_timestamp:
         logfolder = f'{args.basedir}/{args.expname}{datetime.datetime.now().strftime("-%Y%m%d-%H%M%S")}'
     else:
         logfolder = f'{args.basedir}/{args.expname}'
 
-    # init log file
     os.makedirs(logfolder, exist_ok=True)
     os.makedirs(f'{logfolder}/imgs_vis', exist_ok=True)
     os.makedirs(f'{logfolder}/imgs_rgba', exist_ok=True)
     os.makedirs(f'{logfolder}/rgba', exist_ok=True)
     summary_writer = SummaryWriter(logfolder)
 
-    # init parameters
+    # init hyper parameters
     aabb = train_dataset.scene_bbox.to(device)
     reso_cur = N_to_reso(args.N_voxel_init, aabb)  # number of voxel along x,y,z.
     nSamples = min(args.nSamples, cal_n_samples(reso_cur, args.step_ratio))
@@ -147,6 +147,7 @@ def reconstruction(args):
 
     print("lr decay", args.lr_decay_target_ratio, args.lr_decay_iters)
 
+    # init optimizer
     optimizer = torch.optim.Adam(grad_vars, betas=(0.9, 0.99))
 
     # linear in logrithmic space
@@ -159,19 +160,22 @@ def reconstruction(args):
     # init rays and RGB
     allrays = train_dataset.all_rays  # (len(self.meta['frames'])*h*w, 6(r_o+r_d))
     allrgbs = train_dataset.all_rgbs  # (len(self.meta['frames'])*h*w, 3(RGB))
+    
+    # filter invalid rays
     if not args.ndc_ray:
         allrays, allrgbs = tensorf.filtering_rays(allrays, allrgbs, bbox_only=True)
     trainingSampler = SimpleSampler(allrays.shape[0], args.batch_size)
 
+    # init loss weights
     Ortho_reg_weight = args.Ortho_weight
     print("initial Ortho_reg_weight", Ortho_reg_weight)
-
     L1_reg_weight = args.L1_weight_inital
     print("initial L1_reg_weight", L1_reg_weight)
     TV_weight_density, TV_weight_app = args.TV_weight_density, args.TV_weight_app
     tvreg = TVLoss()
     print(f"initial TV_weight density: {TV_weight_density} appearance: {TV_weight_app}")
 
+    # start training
     pbar = tqdm(range(args.n_iters), miniters=args.progress_refresh_rate, file=sys.stdout)
     for iteration in pbar:
 
@@ -236,11 +240,11 @@ def reconstruction(args):
                                     compute_extra_metrics=False)
             summary_writer.add_scalar('test/psnr', np.mean(PSNRs_test), global_step=iteration)
 
+        # update aabb boundary
         if iteration in update_AlphaMask_list:
 
-            if reso_cur[0] * reso_cur[1] * reso_cur[2] < 256 ** 3:  # update volume resolution
-                reso_mask = reso_cur
-            new_aabb = tensorf.updateAlphaMask(tuple(reso_mask))
+            new_aabb = tensorf.updateAlphaMask(tuple(reso_cur))
+
             if iteration == update_AlphaMask_list[0]:
                 tensorf.shrink(new_aabb)
                 L1_reg_weight = args.L1_weight_rest
@@ -251,6 +255,7 @@ def reconstruction(args):
                 allrays, allrgbs = tensorf.filtering_rays(allrays, allrgbs)
                 trainingSampler = SimpleSampler(allrgbs.shape[0], args.batch_size)
 
+        # upsample resolution
         if iteration in upsamp_list:
             n_voxels = N_voxel_list.pop(0)
             reso_cur = N_to_reso(n_voxels, tensorf.aabb)
@@ -267,6 +272,7 @@ def reconstruction(args):
 
     tensorf.save(f'{logfolder}/{args.expname}.th')
 
+    # render training data
     if args.render_train:
         os.makedirs(f'{logfolder}/imgs_train_all', exist_ok=True)
         train_dataset = dataset(args.datadir, split='train', downsample=args.downsample_rate, is_stack=True)
@@ -274,6 +280,7 @@ def reconstruction(args):
                                 N_vis=-1, N_samples=-1, white_bg=white_bg, ndc_ray=ndc_ray, device=device)
         print(f'======> {args.expname} test all psnr: {np.mean(PSNRs_test)} <========================')
 
+    # render test data
     if args.render_test:
         os.makedirs(f'{logfolder}/imgs_test_all', exist_ok=True)
         PSNRs_test = evaluation(test_dataset, tensorf, args, renderer, f'{logfolder}/imgs_test_all/',
