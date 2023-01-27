@@ -311,8 +311,6 @@ class TensorBase(torch.nn.Module):
         ), -1).to(self.device)
         dense_xyz = self.aabb[0] * (1 - samples) + self.aabb[1] * samples
 
-        # dense_xyz = dense_xyz
-        # print(self.stepSize, self.distance_scale*self.aabbDiag)
         alpha = torch.zeros_like(dense_xyz[..., 0])
         for i in range(gridSize[0]):
             alpha[i] = self.compute_alpha(dense_xyz[i].view(-1, 3), self.stepSize).view((gridSize[1], gridSize[2]))
