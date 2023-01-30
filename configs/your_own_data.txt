@@ -28,9 +28,6 @@ fea2denseAct = softplus
 view_pe = 2
 fea_pe = 2
 
-view_pe = 2
-fea_pe = 2
-
 TV_weight_density = 0.1
 TV_weight_app = 0.01
 
