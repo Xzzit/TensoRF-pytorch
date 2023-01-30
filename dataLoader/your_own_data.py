@@ -38,7 +38,7 @@ class YourOwnDataset(Dataset):
     
     def read_meta(self):
 
-        with open(os.path.join(self.root_dir, f"transforms_{self.split}.json"), 'r') as f:
+        with open(os.path.join(self.root_dir, f"transforms.json"), 'r') as f:
             self.meta = json.load(f)
 
         w, h = int(self.meta['w']/self.downsample), int(self.meta['h']/self.downsample)
@@ -70,7 +70,7 @@ class YourOwnDataset(Dataset):
             c2w = torch.FloatTensor(pose)
             self.poses += [c2w]
 
-            image_path = os.path.join(self.root_dir, f"{frame['file_path']}.png")
+            image_path = os.path.join(self.root_dir, f"{frame['file_path'].replace('./', '')}")
             self.image_paths += [image_path]
             img = Image.open(image_path)
             
