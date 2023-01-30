@@ -308,7 +308,7 @@ class TensorBase(torch.nn.Module):
             torch.linspace(0, 1, gridSize[0]),
             torch.linspace(0, 1, gridSize[1]),
             torch.linspace(0, 1, gridSize[2]),
-        ), -1).to(self.device)
+            indexing='ij'), -1).to(self.device)
         dense_xyz = self.aabb[0] * (1 - samples) + self.aabb[1] * samples
 
         alpha = torch.zeros_like(dense_xyz[..., 0])
